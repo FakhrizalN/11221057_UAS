@@ -1,0 +1,88 @@
+services:
+  storage:
+    image: postgres:16-alpine
+    container_name: log-storage
+    environment:
+      POSTGRES_DB: logdb
+      POSTGRES_USER: loguser
+      POSTGRES_PASSWORD: logpass
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./aggregator/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loguser -d logdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lognet
+    restart: unless-stopped
+
+  broker:
+    image: redis:7-alpine
+    container_name: log-broker
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lognet
+    restart: unless-stopped
+
+  aggregator:
+    build:
+      context: ./aggregator
+      dockerfile: Dockerfile
+    container_name: log-aggregator
+    depends_on:
+      storage:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://loguser:logpass@storage:5432/logdb
+      REDIS_URL: redis://broker:6379
+      WORKER_COUNT: "4"
+      LOG_LEVEL: INFO
+    ports:
+      - "8080:8080"
+    networks:
+      - lognet
+    restart: unless-stopped
+
+  publisher:
+    build:
+      context: ./publisher
+      dockerfile: Dockerfile
+    container_name: log-publisher
+    depends_on:
+      broker:
+        condition: service_healthy
+      aggregator:
+        condition: service_started
+    environment:
+      REDIS_URL: redis://broker:6379
+      AGGREGATOR_URL: http://aggregator:8080
+      EVENT_COUNT: "25000"
+      DUPLICATE_RATE: "0.35"
+      BATCH_SIZE: "100"
+      DELAY_MS: "10"
+    networks:
+      - lognet
+    profiles:
+      - publisher
+
+networks:
+  lognet:
+    driver: bridge
+    internal: false  # Allow local access for demo
+
+volumes:
+  pg_data:
+    name: log-pg-data
+  redis_data:
+    name: log-redis-data
