@@ -8,6 +8,7 @@ Implements:
 - Atomic statistics updates
 """
 import asyncio
+import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
@@ -146,7 +147,7 @@ async def process_event(
                 event.event_id,
                 event.timestamp,
                 event.source,
-                event.payload,
+                json.dumps(event.payload),
                 worker_id
             )
             
@@ -222,7 +223,7 @@ async def process_events_batch(
                     event.event_id,
                     event.timestamp,
                     event.source,
-                    event.payload,
+                    json.dumps(event.payload),
                     worker_id
                 )
                 
@@ -308,7 +309,7 @@ async def get_events(
                 event_id=row['event_id'],
                 timestamp=row['timestamp'],
                 source=row['source'],
-                payload=row['payload'],
+                payload=json.loads(row['payload']) if isinstance(row['payload'], str) else row['payload'],
                 processed_at=row['processed_at']
             )
             for row in rows
