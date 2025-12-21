@@ -3,7 +3,6 @@
 
 **NIM**: 11221057  
 **Mata Kuliah**: Sistem Terdistribusi  
-**Semester**: Ganjil 2024/2025
 
 ---
 
@@ -518,15 +517,4 @@ Tanenbaum, A. S., & Van Steen, M. (2017). *Distributed Systems: Principles and P
 
 ## Video Demo
 
-[Link Video Demo YouTube](https://youtube.com/watch?v=YOUR_VIDEO_ID)
-
-Durasi: < 25 menit
-
-Konten demo:
-1. Arsitektur multi-service dan alasan desain
-2. Build image dan docker compose up
-3. Pengiriman event duplikat dan bukti idempotency
-4. Demonstrasi transaksi/konkurensi multi-worker
-5. GET /events dan GET /stats
-6. Crash/recreate container + bukti persistensi
-7. Observability (logging, metrik)
+[Link Video Demo YouTube](https://youtu.be/n0tNkrIGOcM)
